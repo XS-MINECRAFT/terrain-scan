@@ -1,0 +1,80 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'me.modmuss50.mod-publish-plugin' version "${mod_publish_version}"
+}
+
+version = "${project.mod_version}+${project.minecraft_version}"
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+}
+
+processResources {
+	def version = project.version
+	inputs.property "version", version
+	filesMatching("fabric.mod.json") { expand "version": version }
+}
+
+java {
+	toolchain { languageVersion = JavaLanguageVersion.of(25) }
+	withSourcesJar()
+}
+
+jar {
+	def projectName = project.name
+	inputs.property "projectName", projectName
+	from("LICENSE") { rename { "${it}_$projectName" } }
+}
+
+fabricApi {
+	configureTests {
+		createSourceSet = true
+		modId = "terrainscan-test"
+		enableGameTests = false
+		enableClientGameTests = true
+		eula = true
+	}
+}
+
+publishMods {
+	file = jar.archiveFile
+	displayName = "Terrain Scan ${project.version}"
+	changelog = latestChangelog()
+	type = STABLE
+	modLoaders.add("fabric")
+	dryRun = providers.environmentVariable("MODRINTH_TOKEN").getOrNull() == null
+
+	modrinth {
+		accessToken = providers.environmentVariable("MODRINTH_TOKEN")
+		projectId = project.modrinth_id
+		projectDescription = file("README.md").text.split(/(?m)^## Building/)[0].trim()
+		minecraftVersions.add(project.minecraft_version)
+		environment = CLIENT_ONLY
+		requires("fabric-api")
+	}
+
+	if (project.curseforge_id) {
+		curseforge {
+			accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
+			projectId = project.curseforge_id
+			minecraftVersions.add(project.minecraft_version)
+			client = true
+			server = false
+			requires("fabric-api")
+		}
+	}
+
+	github {
+		accessToken = providers.environmentVariable("GITHUB_TOKEN")
+		repository = "XS-MINECRAFT/terrain-scan"
+		commitish = "main"
+		tagName = "v${project.version}"
+	}
+}
+
+String latestChangelog() {
+	def sections = file("CHANGELOG.md").text.split(/(?m)^## /)
+	return sections.length > 1 ? sections[1].readLines().drop(1).join("\n").trim() : ""
+}

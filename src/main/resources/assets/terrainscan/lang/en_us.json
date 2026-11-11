@@ -1,0 +1,22 @@
+{
+	"terrainscan.scan.started": "Recording '%s': everything within %s chunks of you, Y %s..%s. Walk around, then /scan stop.",
+	"terrainscan.scan.stopped": "Saved '%s': %s chunks to %s",
+	"terrainscan.scan.progress": "Scanning '%s': %s chunks",
+	"terrainscan.scan.chunk_failed": "Scan of chunk %s,%s failed: %s",
+	"terrainscan.paste.started": "Pasting '%s' (%s chunks) at its original coordinates. /paste undo reverts it.",
+	"terrainscan.paste.progress": "Pasting '%s': %s/%s chunks",
+	"terrainscan.paste.chunk_failed": "Paste of %s failed: %s",
+	"terrainscan.undo.started": "Undoing last paste...",
+	"terrainscan.undo.finished": "Undo finished.",
+	"terrainscan.error.invalid_name": "Name may only contain letters, digits, '_' and '-' (and can't be 'undo').",
+	"terrainscan.error.already_recording": "Already recording '%s'. Use /scan stop first.",
+	"terrainscan.error.y_outside_world": "Y range is outside the world.",
+	"terrainscan.error.create_failed": "Could not create %s: %s",
+	"terrainscan.error.not_recording": "Not recording.",
+	"terrainscan.error.singleplayer_only": "%s only works in a singleplayer world.",
+	"terrainscan.error.no_such_scan": "No scan named '%s'.",
+	"terrainscan.error.busy": "A paste/undo is still running.",
+	"terrainscan.error.read_failed": "Could not read scan '%s': %s",
+	"terrainscan.error.empty_scan": "Scan '%s' has no chunks.",
+	"terrainscan.error.nothing_to_undo": "Nothing to undo."
+}

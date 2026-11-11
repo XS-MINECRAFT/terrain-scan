@@ -1,0 +1,21 @@
+{
+	"schemaVersion": 1,
+	"id": "terrainscan",
+	"version": "${version}",
+	"name": "Terrain Scan",
+	"description": "Scan terrain on any server, paste it in singleplayer.",
+	"authors": ["XSchils"],
+	"contact": {
+		"sources": "https://github.com/XS-MINECRAFT/terrain-scan",
+		"issues": "https://github.com/XS-MINECRAFT/terrain-scan/issues"
+	},
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": { "client": ["dev.terrainscan.TerrainScan"] },
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
