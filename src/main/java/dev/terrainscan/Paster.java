@@ -60,10 +60,11 @@ final class Paster {
 			return fail(src, "error.read_failed", name, e.getMessage());
 		}
 		if (files.isEmpty()) return fail(src, "error.empty_scan", name);
+		var dim = meta.dim() != null ? meta.dim() : src.getLevel().dimension();
+		if (server.getLevel(dim) == null) return fail(src, "error.unknown_dimension", name, dim.identifier());
 		server.execute(() -> server.tickRateManager().setFrozen(true));
 
 		var uuid = src.getPlayer().getUUID();
-		var dim = src.getLevel().dimension();
 		List<Backup> backups = Collections.synchronizedList(new ArrayList<>());
 		lastPaste = backups;
 		int[] done = {0};

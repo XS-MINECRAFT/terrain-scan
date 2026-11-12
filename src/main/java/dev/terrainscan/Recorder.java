@@ -54,7 +54,7 @@ final class Recorder {
 
 		Path dir;
 		try {
-			dir = ScanFiles.create(name, src.getPlayer().blockPosition(), lo);
+			dir = ScanFiles.create(name, src.getPlayer().blockPosition(), lo, level.dimension());
 		} catch (IOException e) {
 			TerrainScan.LOGGER.error("Could not create scan folder for '{}'", name, e);
 			return fail(src, "error.create_failed", ScanFiles.dir(name), e.getMessage());

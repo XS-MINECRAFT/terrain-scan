@@ -54,6 +54,7 @@ public class TerrainScanGameTest implements FabricClientGameTest {
 			check(Recorder.active == null, "recording stopped");
 			String[] meta = read(ScanFiles.ROOT.resolve("srv/scan.txt")).trim().split(" ");
 			center = new BlockPos(Integer.parseInt(meta[0]), y, Integer.parseInt(meta[1]));
+			check(meta.length == 4 && meta[3].equals("minecraft:overworld"), "scan.txt records the dimension");
 			ctx.runOnClient(mc -> mc.player.connection.sendCommand("scan start left 1"));
 			ctx.waitTick();
 			check(Recorder.active != null, "second scan left running");
@@ -69,8 +70,11 @@ public class TerrainScanGameTest implements FabricClientGameTest {
 
 			sp.getServer().runCommand("summon pig %d.5 %d %d.5 {NoAI:1b,PersistenceRequired:1b}".formatted(p.getX() - 3, y, p.getZ() - 3));
 			ctx.waitTicks(5);
+			sp.getServer().runCommand("execute in minecraft:the_nether run tp @a 200 %d 200".formatted(y));
+			ctx.waitFor(mc -> mc.level.dimension() == Level.NETHER, 200);
 			ctx.runOnClient(mc -> mc.player.connection.sendCommand("paste srv"));
 			ctx.waitFor(mc -> Paster.jobs.isEmpty(), 600);
+			ctx.waitFor(mc -> mc.level.dimension() == Level.OVERWORLD, 200);
 			ctx.waitTicks(10);
 			BlockPos landed = ctx.computeOnClient(mc -> mc.player.blockPosition());
 			check(landed.getX() == center.getX() && landed.getZ() == center.getZ() && landed.getY() > y - 5, "teleported on top of scan center, at " + landed);

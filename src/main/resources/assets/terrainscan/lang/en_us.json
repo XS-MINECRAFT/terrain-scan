@@ -18,5 +18,6 @@
 	"terrainscan.error.busy": "A paste/undo is still running.",
 	"terrainscan.error.read_failed": "Could not read scan '%s': %s",
 	"terrainscan.error.empty_scan": "Scan '%s' has no chunks.",
-	"terrainscan.error.nothing_to_undo": "Nothing to undo."
+	"terrainscan.error.nothing_to_undo": "Nothing to undo.",
+	"terrainscan.error.unknown_dimension": "Scan '%s' was recorded in %s, which this world doesn't have."
 }
