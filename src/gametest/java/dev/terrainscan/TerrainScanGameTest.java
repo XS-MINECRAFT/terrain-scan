@@ -62,6 +62,8 @@ public class TerrainScanGameTest implements FabricClientGameTest {
 			check(sp.getServer().computeOnServer(s -> s.tickRateManager().isFrozen()), "singleplayer world frozen on join");
 			sp.getServer().runCommand("tick unfreeze");
 
+			sp.getServer().runCommand("summon pig %d.5 %d %d.5 {NoAI:1b,PersistenceRequired:1b}".formatted(p.getX() - 3, y, p.getZ() - 3));
+			ctx.waitTicks(5);
 			ctx.runOnClient(mc -> mc.player.connection.sendCommand("paste srv"));
 			ctx.waitFor(mc -> Paster.jobs.isEmpty(), 600);
 			ctx.waitTicks(10);
@@ -91,6 +93,7 @@ public class TerrainScanGameTest implements FabricClientGameTest {
 				ServerLevel l = s.overworld();
 				check(l.getBlockState(p.offset(1, 3, 1)).isAir(), "undo removed pillar");
 				check(l.getEntitiesOfClass(ArmorStand.class, new AABB(p).inflate(12)).isEmpty(), "undo removed armor stand");
+				check(l.getEntitiesOfClass(net.minecraft.world.entity.animal.pig.Pig.class, new AABB(p).inflate(12)).size() == 1, "undo kept mobs without duplicating them");
 			});
 		}
 	}

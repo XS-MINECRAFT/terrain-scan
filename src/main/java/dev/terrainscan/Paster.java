@@ -15,6 +15,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.server.MinecraftServer;
@@ -71,6 +72,7 @@ final class Paster {
 					var t = load(level, f);
 					var backup = new StructureTemplate();
 					backup.fillFromWorld(level, origin, t.getSize(), true, List.of());
+					backup.load(level.holderLookup(Registries.BLOCK), Decorations.filter(backup.save(new CompoundTag())));
 					backups.add(new Backup(origin, backup));
 					Decorations.clear(level, origin, t.getSize());
 					place(level, t, origin);

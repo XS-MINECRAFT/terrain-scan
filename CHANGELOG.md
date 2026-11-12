@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fixed `/paste undo` duplicating mobs, dropped items, minecarts and boats (#1).
+
 ## 1.0.0
 
 - `/scan start <name> <radius> [minY maxY]` records the terrain around you on any server, following you as you walk.
