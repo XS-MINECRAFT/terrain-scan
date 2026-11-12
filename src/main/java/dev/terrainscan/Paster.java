@@ -30,7 +30,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 
 final class Paster {
 	static final ArrayDeque<Runnable> jobs = new ArrayDeque<>();
-	private static List<Backup> lastPaste = List.of();
+	static List<Backup> lastPaste = List.of();
 
 	private Paster() {}
 

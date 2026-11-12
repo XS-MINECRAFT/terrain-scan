@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Fixed `/paste undo` duplicating mobs, dropped items, minecarts and boats (#1).
+- Leaving a world or server now cancels a running paste, clears the `/paste undo` backup and stops an active scan (#2).
 
 ## 1.0.0
 
