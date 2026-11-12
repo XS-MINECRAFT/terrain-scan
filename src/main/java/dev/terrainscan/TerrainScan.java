@@ -1,5 +1,6 @@
 package dev.terrainscan;
 
+import java.util.List;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -28,6 +29,11 @@ public class TerrainScan implements ClientModInitializer {
 
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			tick++;
+			if (mc.level == null) {
+				Recorder.active = null;
+				Paster.jobs.clear();
+				Paster.lastPaste = List.of();
+			}
 			Recorder.tick(mc);
 			Paster.tick(mc);
 		});

@@ -12,6 +12,7 @@ import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.phys.AABB;
@@ -53,6 +54,10 @@ public class TerrainScanGameTest implements FabricClientGameTest {
 			check(Recorder.active == null, "recording stopped");
 			String[] meta = read(ScanFiles.ROOT.resolve("srv/scan.txt")).trim().split(" ");
 			center = new BlockPos(Integer.parseInt(meta[0]), y, Integer.parseInt(meta[1]));
+			check(meta.length == 4 && meta[3].equals("minecraft:overworld"), "scan.txt records the dimension");
+			ctx.runOnClient(mc -> mc.player.connection.sendCommand("scan start left 1"));
+			ctx.waitTick();
+			check(Recorder.active != null, "second scan left running");
 		}
 
 		try (var sp = ctx.worldBuilder().adjustSettings(s -> s.setGameMode(WorldCreationUiState.SelectedGameMode.CREATIVE)).create()) {
@@ -61,9 +66,15 @@ public class TerrainScanGameTest implements FabricClientGameTest {
 			BlockPos p = base;
 			check(sp.getServer().computeOnServer(s -> s.tickRateManager().isFrozen()), "singleplayer world frozen on join");
 			sp.getServer().runCommand("tick unfreeze");
+			check(Recorder.active == null, "leaving the server stopped the scan");
 
+			sp.getServer().runCommand("summon pig %d.5 %d %d.5 {NoAI:1b,PersistenceRequired:1b}".formatted(p.getX() - 3, y, p.getZ() - 3));
+			ctx.waitTicks(5);
+			sp.getServer().runCommand("execute in minecraft:the_nether run tp @a 200 %d 200".formatted(y));
+			ctx.waitFor(mc -> mc.level.dimension() == Level.NETHER, 200);
 			ctx.runOnClient(mc -> mc.player.connection.sendCommand("paste srv"));
 			ctx.waitFor(mc -> Paster.jobs.isEmpty(), 600);
+			ctx.waitFor(mc -> mc.level.dimension() == Level.OVERWORLD, 200);
 			ctx.waitTicks(10);
 			BlockPos landed = ctx.computeOnClient(mc -> mc.player.blockPosition());
 			check(landed.getX() == center.getX() && landed.getZ() == center.getZ() && landed.getY() > y - 5, "teleported on top of scan center, at " + landed);
@@ -84,15 +95,26 @@ public class TerrainScanGameTest implements FabricClientGameTest {
 			ctx.waitTicks(5);
 			ctx.takeScreenshot("terrainscan-pasted");
 
+			sp.getServer().runCommand("execute in minecraft:the_nether run tp @a %d %d %d".formatted(p.getX(), y, p.getZ()));
+			ctx.waitFor(mc -> mc.level.dimension() == Level.NETHER, 200);
 			ctx.runOnClient(mc -> mc.player.connection.sendCommand("paste undo"));
 			ctx.waitFor(mc -> Paster.jobs.isEmpty(), 600);
 			ctx.waitTicks(10);
 			sp.getServer().runOnServer(s -> {
 				ServerLevel l = s.overworld();
-				check(l.getBlockState(p.offset(1, 3, 1)).isAir(), "undo removed pillar");
+				check(l.getBlockState(p.offset(1, 3, 1)).isAir(), "undo from the nether removed pillar in the overworld");
 				check(l.getEntitiesOfClass(ArmorStand.class, new AABB(p).inflate(12)).isEmpty(), "undo removed armor stand");
+				check(l.getEntitiesOfClass(net.minecraft.world.entity.animal.pig.Pig.class, new AABB(p).inflate(12)).size() == 1, "undo kept mobs without duplicating them");
 			});
+
+			sp.getServer().runCommand("execute in minecraft:overworld run tp @a 200 %d 200".formatted(y));
+			ctx.waitFor(mc -> mc.level.dimension() == Level.OVERWORLD, 200);
+			ctx.runOnClient(mc -> mc.player.connection.sendCommand("paste srv"));
+			ctx.waitTick();
+			check(!ctx.computeOnClient(mc -> Paster.jobs.isEmpty()), "paste left running");
 		}
+		ctx.waitFor(mc -> Paster.jobs.isEmpty() && Paster.lastPaste.isEmpty(), 200);
+		check(true, "leaving the world cancelled the paste and cleared undo");
 	}
 
 	static void check(boolean ok, String what) {
