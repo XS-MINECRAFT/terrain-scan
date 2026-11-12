@@ -9,12 +9,14 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
@@ -22,6 +24,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.templatesystem.LiquidSettings;
@@ -34,7 +37,7 @@ final class Paster {
 
 	private Paster() {}
 
-	record Backup(BlockPos origin, StructureTemplate template) {}
+	record Backup(ResourceKey<Level> dim, BlockPos origin, StructureTemplate template) {}
 
 	static void tick(Minecraft mc) {
 		var server = mc.getSingleplayerServer();
@@ -60,6 +63,7 @@ final class Paster {
 		server.execute(() -> server.tickRateManager().setFrozen(true));
 
 		var uuid = src.getPlayer().getUUID();
+		var dim = src.getLevel().dimension();
 		List<Backup> backups = Collections.synchronizedList(new ArrayList<>());
 		lastPaste = backups;
 		int[] done = {0};
@@ -67,13 +71,13 @@ final class Paster {
 			int[] xz = ScanFiles.chunkOf(f);
 			BlockPos origin = new BlockPos(xz[0] << 4, meta.minY(), xz[1] << 4);
 			jobs.add(forPlayer(server, uuid, player -> {
-				ServerLevel level = player.level();
+				ServerLevel level = server.getLevel(dim);
 				try {
 					var t = load(level, f);
 					var backup = new StructureTemplate();
 					backup.fillFromWorld(level, origin, t.getSize(), true, List.of());
 					backup.load(level.holderLookup(Registries.BLOCK), Decorations.filter(backup.save(new CompoundTag())));
-					backups.add(new Backup(origin, backup));
+					backups.add(new Backup(dim, origin, backup));
 					Decorations.clear(level, origin, t.getSize());
 					place(level, t, origin);
 				} catch (Exception e) {
@@ -85,8 +89,9 @@ final class Paster {
 			}));
 		}
 		jobs.add(forPlayer(server, uuid, player -> {
-			int top = player.level().getHeight(Heightmap.Types.MOTION_BLOCKING, meta.centerX(), meta.centerZ());
-			player.teleportTo(meta.centerX() + 0.5, top + 1, meta.centerZ() + 0.5);
+			ServerLevel level = server.getLevel(dim);
+			int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, meta.centerX(), meta.centerZ());
+			player.teleportTo(level, meta.centerX() + 0.5, top + 1, meta.centerZ() + 0.5, Set.of(), player.getYRot(), player.getXRot(), false);
 		}));
 		src.sendFeedback(msg("paste.started", name, files.size()));
 		return 1;
@@ -100,8 +105,9 @@ final class Paster {
 		var uuid = src.getPlayer().getUUID();
 		for (Backup b : lastPaste)
 			jobs.add(forPlayer(server, uuid, player -> {
-				Decorations.clear(player.level(), b.origin, b.template.getSize());
-				place(player.level(), b.template, b.origin);
+				ServerLevel level = server.getLevel(b.dim);
+				Decorations.clear(level, b.origin, b.template.getSize());
+				place(level, b.template, b.origin);
 			}));
 		jobs.add(forPlayer(server, uuid, player -> player.sendSystemMessage(msg("undo.finished"))));
 		lastPaste = List.of();
